@@ -1865,6 +1865,23 @@ footer small {
   box-shadow: 0 8px 28px rgba(8, 13, 47, 0.24);
 }
 
+.loading-note,
+.form-status,
+.form-error {
+  margin: 8px 0;
+  font-size: 0.85rem;
+  font-weight: 700;
+}
+
+.loading-note,
+.form-status {
+  color: var(--color-teal-dark);
+}
+
+.form-error {
+  color: #9A5B00;
+}
+
 /* Learner stories */
 .testimonial-grid {
   display: grid;

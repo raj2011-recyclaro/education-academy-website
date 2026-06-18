@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { getInstructor } from "../data/instructors";
+import { createRegistration } from "../lib/api";
 
 export function ScrollToTop() {
   const { pathname } = useLocation();
@@ -48,14 +49,34 @@ export function SeatProgressBar({ value = 84 }) {
 
 export function RegistrationForm({ item, type = "masterclass", compact = false }) {
   const navigate = useNavigate();
-  const submit = (event) => {
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState("");
+  const submit = async (event) => {
     event.preventDefault();
-    navigate("/registration-success", { state: { item, type } });
+    setError("");
+    setSubmitting(true);
+    const formData = new FormData(event.currentTarget);
+    try {
+      const registration = await createRegistration({
+        fullName: formData.get("fullName"),
+        email: formData.get("email"),
+        whatsapp: formData.get("whatsapp") || "",
+        itemSlug: item.slug,
+        itemTitle: item.title,
+        itemType: type,
+      });
+      navigate("/registration-success", { state: { item, type, registration } });
+    } catch (requestError) {
+      setError(requestError.message || "Registration could not be completed.");
+    } finally {
+      setSubmitting(false);
+    }
   };
   return <form className={compact ? "registration-form compact" : "registration-form"} onSubmit={submit}>
-    <label>Full name<input required placeholder="Your full name" /></label>
-    <label>Work email<input required type="email" placeholder="you@company.com" /></label>
-    {!compact && <label>WhatsApp (optional)<input placeholder="+91 00000 00000" /></label>}
+    <label>Full name<input required name="fullName" placeholder="Your full name" /></label>
+    <label>Work email<input required name="email" type="email" placeholder="you@company.com" /></label>
+    {!compact && <label>WhatsApp (optional)<input name="whatsapp" placeholder="+91 00000 00000" /></label>}
+    {error && <p className="form-error">{error}</p>}
     <button className="button" type="submit">{type === "bootcamp" ? "Enroll / join waitlist" : `Register ${item.price === "Free" ? "for free" : "now"}`} →</button>
   </form>;
 }
