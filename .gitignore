@@ -3,3 +3,4 @@ dist
 .env
 .DS_Store
 stitch_masterclass_marketplace_hub
+server/.env
