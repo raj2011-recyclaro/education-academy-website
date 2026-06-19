@@ -69,6 +69,18 @@ export async function getBootcamp(slug) {
   }
 }
 
+export async function getHomepageContent() {
+  return request("/api/homepage");
+}
+
+export async function getCategories({ featured = false } = {}) {
+  return request(`/api/categories${featured ? "?featured=true" : ""}`);
+}
+
+export async function getTestimonials({ featured = false } = {}) {
+  return request(`/api/testimonials${featured ? "?featured=true" : ""}`);
+}
+
 export async function createRegistration(payload) {
   try {
     return await request("/api/registrations", {

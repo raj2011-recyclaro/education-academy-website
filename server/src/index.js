@@ -3,7 +3,10 @@ import cors from "cors";
 import dotenv from "dotenv";
 import express from "express";
 import { bootcamps } from "./data/bootcamps.js";
+import { categories } from "./data/categories.js";
+import { getHomepageContent } from "./data/homepage.js";
 import { masterclasses } from "./data/masterclasses.js";
+import { testimonials } from "./data/testimonials.js";
 
 dotenv.config();
 
@@ -49,6 +52,24 @@ app.get("/health", (_req, res) => {
 
 app.get("/api/masterclasses", (_req, res) => {
   res.json({ data: masterclasses });
+});
+
+app.get("/api/homepage", (_req, res) => {
+  res.json({ data: getHomepageContent() });
+});
+
+app.get("/api/categories", (req, res) => {
+  const featuredOnly = req.query.featured === "true";
+  const data = categories
+    .filter((category) => !featuredOnly || category.featured)
+    .sort((a, b) => a.sortOrder - b.sortOrder);
+  res.json({ data });
+});
+
+app.get("/api/testimonials", (req, res) => {
+  const featuredOnly = req.query.featured === "true";
+  const data = testimonials.filter((story) => !featuredOnly || story.featured);
+  res.json({ data });
 });
 
 app.get("/api/masterclasses/:slug", (req, res) => {

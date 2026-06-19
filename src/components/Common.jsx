@@ -32,7 +32,15 @@ export function SearchBar({ value, onChange, placeholder = "Search courses, skil
 }
 
 export function CategoryFilter({ categories, active, onChange }) {
-  return <div className="chips">{categories.map((category) => <button className={active === category ? "chip active" : "chip"} key={category} onClick={() => onChange(category)}>{category}</button>)}</div>;
+  return <div className="chips">{categories.map((category) => {
+    const option = typeof category === "string"
+      ? { label: category, value: category }
+      : {
+        label: category.label || category.name || category.slug,
+        value: category.value || category.slug || category.name,
+      };
+    return <button className={active === option.value ? "chip active" : "chip"} key={option.value} onClick={() => onChange(option.value)}>{option.label}</button>;
+  })}</div>;
 }
 
 export function VideoThumbnail({ image, label = "Preview lesson", large = false }) {
