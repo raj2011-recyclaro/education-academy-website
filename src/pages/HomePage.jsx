@@ -1,87 +1,216 @@
+import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { useState } from "react";
-import { masterclasses } from "../data/masterclasses";
+import { CategoryFilter, FAQAccordion, InstructorCard, SearchBar } from "../components/Common";
+import { BootcampCard, CourseRail, FeaturedMasterclass } from "../components/CourseCards";
 import { bootcamps } from "../data/bootcamps";
 import { instructors } from "../data/instructors";
-import {
-  CategoryFilter,
-  FAQAccordion,
-  InstructorCard,
-  SearchBar,
-} from "../components/Common";
-import {
-  BootcampCard,
-  CourseRail,
-  FeaturedMasterclass,
-} from "../components/CourseCards";
+import { masterclasses } from "../data/masterclasses";
+import { useCategories } from "../hooks/useCategories";
+import { getHomepageContent, getTestimonials } from "../lib/api";
 
-const learnerStories = [
+const fallbackLearnerStories = [
   {
-    quote:
-      "The live teardown gave me a framework I used at work the very next morning.",
+    quote: "The live teardown gave me a framework I used at work the very next morning.",
     name: "Ananya S.",
     role: "Product Lead",
   },
   {
-    quote:
-      "It felt closer to a great workshop than another online course I would never finish.",
+    quote: "It felt closer to a great workshop than another online course I would never finish.",
     name: "Rohan M.",
     role: "Data Analyst",
   },
   {
-    quote:
-      "My capstone became the strongest project in my engineering portfolio.",
+    quote: "My capstone became the strongest project in my engineering portfolio.",
     name: "Meera K.",
     role: "Software Engineer",
   },
   {
-    quote:
-      "The instructor helped me turn a vague AI idea into a clear prototype plan I could explain to my team.",
+    quote: "The instructor helped me turn a vague AI idea into a clear prototype plan I could explain to my team.",
     name: "Kabir A.",
     role: "Operations Manager",
   },
   {
-    quote:
-      "The bootcamp gave me structure, deadlines, and useful feedback without making the material feel rushed.",
+    quote: "The bootcamp gave me structure, deadlines, and useful feedback without making the material feel rushed.",
     name: "Nisha P.",
     role: "UX Researcher",
   },
 ];
 
+const fallbackHomepageContent = {
+  hero: {
+    eyebrow: "Live learning, thoughtfully designed",
+    headline: "Learn from experts. Build skills that move you forward.",
+    subheadline:
+      "Join focused live masterclasses and mentor-led bootcamps built for ambitious professionals who want more than passive watching.",
+    primaryCTA: { label: "Explore masterclasses", href: "/masterclasses" },
+    secondaryCTA: { label: "View bootcamps", href: "/bootcamps" },
+    proofPoints: ["4.9/5 learner rating", "35k+ learning hours", "32 expert instructors"],
+  },
+  featuredMasterclass: masterclasses[0],
+  trendingMasterclasses: masterclasses.slice(1, 5),
+  featuredBootcamps: bootcamps,
+  categorySection: {
+    eyebrow: "Find your next leap",
+    title: "What do you want to learn?",
+  },
+  categories: [
+    { name: "Artificial Intelligence" },
+    { name: "Finance" },
+    { name: "Product Strategy" },
+    { name: "Engineering" },
+  ],
+  testimonialSection: {
+    eyebrow: "Learner stories",
+    title: "Small rooms. Serious progress.",
+  },
+  testimonials: fallbackLearnerStories,
+  finalCTA: {
+    eyebrow: "Your next chapter can start small",
+    title: "One live session could change how you work.",
+    description: "Join thousands of thoughtful learners building future-relevant skills.",
+    ctaLabel: "Find your masterclass",
+    href: "/masterclasses",
+  },
+};
+
+function normalizeMasterclass(course) {
+  if (!course) return course;
+  return {
+    ...course,
+    price: course.price ?? course.priceLabel ?? "Free",
+    registered: course.registered ?? course.registeredCount ?? 0,
+    overview: course.overview ?? course.summary,
+    date: course.date ?? course.dateTime?.split(" · ")[0] ?? "",
+    time: course.time ?? course.dateTime?.split(" · ")[1] ?? "",
+  };
+}
+
+function normalizeBootcamp(course) {
+  if (!course) return course;
+  return {
+    ...course,
+    price: course.price ?? course.priceLabel ?? "",
+  };
+}
+
+function normalizeTestimonial(story) {
+  return {
+    quote: story.quote,
+    name: story.name ?? story.learnerName,
+    role: story.role,
+  };
+}
+
+function renderHeadline(headline) {
+  if (!headline?.toLowerCase().startsWith("learn ")) return headline;
+  return (
+    <>
+      <span className="whooplash-underline">Learn</span>
+      {headline.slice("Learn".length)}
+    </>
+  );
+}
+
+function renderTestimonialTitle(title) {
+  if (!title?.toLowerCase().includes("progress")) return title;
+  const [before, after] = title.split(/progress/i);
+  return (
+    <>
+      {before}
+      <span className="whooplash-underline">progress</span>
+      {after}
+    </>
+  );
+}
+
 export default function HomePage() {
   const navigate = useNavigate();
+  const [homeContent, setHomeContent] = useState(fallbackHomepageContent);
+  const [loading, setLoading] = useState(true);
+  const [apiError, setApiError] = useState("");
   const [query, setQuery] = useState("");
-  const [category, setCategory] = useState("All topics");
+  const [category, setCategory] = useState("all");
+  const { categories } = useCategories();
+
+  useEffect(() => {
+    let active = true;
+    getHomepageContent()
+      .then(async (data) => {
+        if (!active) return;
+        if (data.testimonials?.length) {
+          setHomeContent(data);
+          return;
+        }
+
+        try {
+          const testimonials = await getTestimonials();
+          if (active) setHomeContent({ ...data, testimonials });
+        } catch (testimonialError) {
+          console.warn("Using fallback testimonials:", testimonialError.message);
+          if (active) setHomeContent(data);
+        }
+      })
+      .catch((error) => {
+        console.warn("Using fallback homepage content:", error.message);
+        if (active) setApiError("Showing saved homepage content.");
+      })
+      .finally(() => {
+        if (active) setLoading(false);
+      });
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  const hero = homeContent.hero ?? fallbackHomepageContent.hero;
+  const categorySection = homeContent.categorySection ?? fallbackHomepageContent.categorySection;
+  const testimonialSection = homeContent.testimonialSection ?? fallbackHomepageContent.testimonialSection;
+  const finalCTA = homeContent.finalCTA ?? fallbackHomepageContent.finalCTA;
+
+  const featuredMasterclass = normalizeMasterclass(homeContent.featuredMasterclass) ?? masterclasses[0];
+  const trendingMasterclasses = (homeContent.trendingMasterclasses?.length
+    ? homeContent.trendingMasterclasses
+    : fallbackHomepageContent.trendingMasterclasses
+  ).map(normalizeMasterclass);
+  const featuredBootcamps = (homeContent.featuredBootcamps?.length
+    ? homeContent.featuredBootcamps
+    : fallbackHomepageContent.featuredBootcamps
+  ).map(normalizeBootcamp);
+  const learnerStories = (homeContent.testimonials?.length
+    ? homeContent.testimonials
+    : fallbackHomepageContent.testimonials
+  ).map(normalizeTestimonial);
+
   const discover = () =>
     navigate(
       `/masterclasses?search=${encodeURIComponent(query)}&category=${encodeURIComponent(category)}`,
     );
+
   return (
     <main>
       <section className="hero section">
         <div className="hero-copy">
-          <div className="eyebrow">Live learning, thoughtfully designed</div>
-          <h1><span className="whooplash-underline">Learn</span> from experts. Build skills that move you forward.</h1>
-          <p>
-            Join focused live masterclasses and mentor-led bootcamps built for
-            ambitious professionals who want more than passive watching.
-          </p>
+          <div className="eyebrow">{hero.eyebrow}</div>
+          <h1>{renderHeadline(hero.headline)}</h1>
+          <p>{hero.subheadline}</p>
           <div className="hero-actions">
-            <Link className="button" to="/masterclasses">
-              Explore masterclasses
+            <Link className="button" to={hero.primaryCTA?.href || "/masterclasses"}>
+              {hero.primaryCTA?.label || "Explore masterclasses"}
             </Link>
-            <Link className="button secondary" to="/bootcamps">
-              View bootcamps
+            <Link className="button secondary" to={hero.secondaryCTA?.href || "/bootcamps"}>
+              {hero.secondaryCTA?.label || "View bootcamps"}
             </Link>
           </div>
           <div className="trust-line">
-            <span>4.9/5 learner rating</span>
-            <span>35k+ learning hours</span>
-            <span>32 expert instructors</span>
+            {(hero.proofPoints || fallbackHomepageContent.hero.proofPoints).map((point) => (
+              <span key={point}>{point}</span>
+            ))}
           </div>
+          {loading && <p className="loading-note">Loading latest homepage content...</p>}
+          {apiError && <p className="form-status">{apiError}</p>}
         </div>
         <div className="course-wall">
-          {masterclasses.slice(0, 5).map((course, index) => (
+          {[featuredMasterclass, ...trendingMasterclasses].slice(0, 5).map((course, index) => (
             <Link
               key={course.slug}
               to={`/masterclasses/${course.slug}`}
@@ -97,30 +226,18 @@ export default function HomePage() {
 
       <section className="discovery section">
         <div>
-          <div className="eyebrow">Find your next leap</div>
-          <h2>What do you want to learn?</h2>
+          <div className="eyebrow">{categorySection.eyebrow}</div>
+          <h2>{categorySection.title}</h2>
         </div>
         <SearchBar value={query} onChange={setQuery} />
-        <CategoryFilter
-          categories={[
-            "All topics",
-            "Artificial Intelligence",
-            "Finance",
-            "Product Strategy",
-            "Engineering",
-          ]}
-          active={category}
-          onChange={setCategory}
-        />
+        <CategoryFilter categories={categories} active={category} onChange={setCategory} />
         <button className="button" onClick={discover}>
           Discover classes
         </button>
       </section>
-      <FeaturedMasterclass course={masterclasses[0]} />
-      <CourseRail
-        title="Trending live masterclasses"
-        courses={masterclasses.slice(1, 5)}
-      />
+
+      <FeaturedMasterclass course={featuredMasterclass} />
+      <CourseRail title="Trending live masterclasses" courses={trendingMasterclasses.slice(0, 5)} />
 
       <section className="section">
         <div className="section-heading">
@@ -131,7 +248,7 @@ export default function HomePage() {
           <Link to="/bootcamps">Explore bootcamps →</Link>
         </div>
         <div className="grid three">
-          {bootcamps.map((course) => (
+          {featuredBootcamps.map((course) => (
             <BootcampCard key={course.slug} course={course} />
           ))}
         </div>
@@ -155,13 +272,13 @@ export default function HomePage() {
       <section className="section social-proof">
         <div className="section-heading">
           <div>
-            <div className="eyebrow">Learner stories</div>
-            <h2>Small rooms. Serious <span className="whooplash-underline">progress</span>.</h2>
+            <div className="eyebrow">{testimonialSection.eyebrow}</div>
+            <h2>{renderTestimonialTitle(testimonialSection.title)}</h2>
           </div>
         </div>
         <div className="testimonial-grid">
           {learnerStories.map(({ quote, name, role }) => (
-            <blockquote className="quote-card card" key={name}>
+            <blockquote className="quote-card card" key={`${name}-${role}`}>
               <span>“</span>
               <p>{quote}</p>
               <footer>
@@ -232,13 +349,11 @@ export default function HomePage() {
       </section>
 
       <section className="final-cta">
-        <div className="eyebrow">Your next chapter can start small</div>
-        <h2>One live session could change how you work.</h2>
-        <p>
-          Join thousands of thoughtful learners building future-relevant skills.
-        </p>
-        <Link className="button light" to="/masterclasses">
-          Find your masterclass →
+        <div className="eyebrow">{finalCTA.eyebrow}</div>
+        <h2>{finalCTA.title}</h2>
+        <p>{finalCTA.description}</p>
+        <Link className="button light" to={finalCTA.href || "/masterclasses"}>
+          {finalCTA.ctaLabel || "Find your masterclass"} →
         </Link>
       </section>
     </main>

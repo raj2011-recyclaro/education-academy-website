@@ -1,14 +1,16 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { CategoryFilter } from "../components/Common";
 import { BootcampCard } from "../components/CourseCards";
 import { bootcamps as fallbackBootcamps } from "../data/bootcamps";
+import { categoryMatches, useCategories } from "../hooks/useCategories";
 import { getBootcamps, joinWaitlist } from "../lib/api";
 
 export default function BootcampsPage() {
   const [courses, setCourses] = useState(fallbackBootcamps);
-  const [category, setCategory] = useState("All programs");
+  const [category, setCategory] = useState("all");
   const [loading, setLoading] = useState(true);
   const [waitlistStatus, setWaitlistStatus] = useState("");
+  const { categories, isLoading: categoriesLoading } = useCategories();
 
   useEffect(() => {
     let active = true;
@@ -24,13 +26,8 @@ export default function BootcampsPage() {
     };
   }, []);
 
-  const categories = useMemo(
-    () => ["All programs", ...new Set(courses.map((item) => item.category))],
-    [courses],
-  );
-
   const results = courses.filter(
-    (item) => category === "All programs" || item.category === category,
+    (item) => categoryMatches(category, item.category),
   );
 
   const submitWaitlist = async (event) => {
@@ -68,7 +65,7 @@ export default function BootcampsPage() {
         <div className="filter-panel">
           <CategoryFilter categories={categories} active={category} onChange={setCategory} />
         </div>
-        {loading && <p className="loading-note">Loading cohort pathways...</p>}
+        {(loading || categoriesLoading) && <p className="loading-note">Loading cohort pathways...</p>}
         <div className="grid three">
           {results.map((course) => (
             <BootcampCard key={course.slug} course={course} />

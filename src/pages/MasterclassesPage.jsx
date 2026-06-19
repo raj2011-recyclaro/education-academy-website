@@ -3,15 +3,22 @@ import { useSearchParams } from "react-router-dom";
 import { CategoryFilter, SearchBar } from "../components/Common";
 import { CourseCard } from "../components/CourseCards";
 import { masterclasses as fallbackMasterclasses } from "../data/masterclasses";
+import { categoryMatches, normalizeCategoryKey, useCategories } from "../hooks/useCategories";
 import { getMasterclasses } from "../lib/api";
+
+function normalizeInitialCategory(value) {
+  const normalized = normalizeCategoryKey(value || "all");
+  return normalized.startsWith("all") ? "all" : normalized;
+}
 
 export default function MasterclassesPage() {
   const [params] = useSearchParams();
   const [courses, setCourses] = useState(fallbackMasterclasses);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState(params.get("search") || "");
-  const [category, setCategory] = useState(params.get("category") || "All topics");
+  const [category, setCategory] = useState(normalizeInitialCategory(params.get("category")));
   const [sort, setSort] = useState("Soonest");
+  const { categories, isLoading: categoriesLoading } = useCategories();
 
   useEffect(() => {
     let active = true;
@@ -27,17 +34,12 @@ export default function MasterclassesPage() {
     };
   }, []);
 
-  const categories = useMemo(
-    () => ["All topics", ...new Set(courses.map((item) => item.category))],
-    [courses],
-  );
-
   const results = useMemo(
     () =>
       courses
         .filter(
           (item) =>
-            (category === "All topics" || item.category === category) &&
+            categoryMatches(category, item.category) &&
             `${item.title} ${item.summary}`.toLowerCase().includes(search.toLowerCase()),
         )
         .sort((a, b) =>
@@ -75,7 +77,7 @@ export default function MasterclassesPage() {
           ))}
         </div>
       </div>
-      {loading && <p className="loading-note">Loading live catalog...</p>}
+      {(loading || categoriesLoading) && <p className="loading-note">Loading live catalog...</p>}
       {results.length ? (
         <div className="grid three">
           {results.map((course) => (
@@ -90,7 +92,7 @@ export default function MasterclassesPage() {
             className="button secondary"
             onClick={() => {
               setSearch("");
-              setCategory("All topics");
+              setCategory("all");
             }}
           >
             Clear filters
