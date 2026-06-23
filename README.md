@@ -1,6 +1,6 @@
-# Academy
+# UpSkillr.in
 
-Academy is a Vite + React learning marketplace with a separate Node.js +
+UpSkillr.in is a Vite + React learning marketplace with a separate Node.js +
 Express API in the same repository.
 
 ## Project Structure
@@ -43,25 +43,43 @@ Backend environment variables:
 
 ```bash
 PORT=4000
+NODE_ENV=development
 FRONTEND_URL=http://localhost:5173
+DATABASE_URL=postgresql://user:password@host:5432/database
+DATABASE_SSL=true
 ```
 
 The API binds to `0.0.0.0` and reads `process.env.PORT`, which is required by
 Render and similar hosts.
 
+Run database migrations after configuring `DATABASE_URL`:
+
+```bash
+cd server
+npm run db:migrate
+```
+
+Check database connectivity:
+
+```bash
+curl http://localhost:4000/api/db/health
+```
+
 ## API Routes
 
 - `GET /health`
+- `GET /api/db/health`
 - `GET /api/masterclasses`
 - `GET /api/masterclasses/:slug`
 - `GET /api/bootcamps`
 - `GET /api/bootcamps/:slug`
 - `POST /api/registrations`
 - `POST /api/waitlist`
+- `POST /api/instructor-applications`
 - `POST /api/contact`
 
 Unknown slugs return JSON `404` responses. Form endpoints lightly validate
-required fields and return generated IDs.
+required fields, save lead submissions to PostgreSQL, and return generated IDs.
 
 ## Frontend Routes
 
@@ -102,15 +120,23 @@ Create a new Render Web Service from the same GitHub repo.
 - Build command: `npm install`
 - Start command: `npm start`
 - Environment variables:
+  - `DATABASE_URL`
+  - `DATABASE_SSL=true`
   - `FRONTEND_URL=https://your-vercel-app.vercel.app`
+  - `NODE_ENV=production`
   - `PORT` is provided by Render automatically
+
+Run migrations from the Render shell or a one-off job after deploy:
+
+```bash
+npm run db:migrate
+```
 
 ## Notes
 
 - Frontend and backend remain deployable independently.
 - Backend data is duplicated from the frontend mock data for now.
-- Registrations, waitlist joins, and contact messages are acknowledged in
-  memory only. A database or email provider can be added later without changing
-  the frontend route flow.
+- Registrations, waitlist joins, instructor applications, and contact messages
+  are stored in PostgreSQL.
 - Thumbnail photography uses remote Unsplash URLs and requires network access to
   display.

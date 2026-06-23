@@ -38,7 +38,7 @@ export default function InfoPage({ type }) {
   return (
     <main className="info-page">
       <section>
-        <div className="eyebrow">{instructor ? "Teach with Academy" : "Talk to a human"}</div>
+        <div className="eyebrow">{instructor ? "Teach with UpSkillr.in" : "Talk to a human"}</div>
         <h1>
           {instructor
             ? "Turn your hard-won experience into an exceptional live class."
@@ -57,7 +57,7 @@ export default function InfoPage({ type }) {
         {sent ? (
           <div className="empty-state">
             <h2>Message received.</h2>
-            <p>Thanks. The Academy team will be in touch soon.</p>
+            <p>Thanks. The UpSkillr.in team will be in touch soon.</p>
           </div>
         ) : (
           <form onSubmit={submit}>

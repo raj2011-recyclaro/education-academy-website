@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Link, NavLink, Outlet, useLocation } from "react-router-dom";
+import Logo from "./Logo";
 
 export function Header() {
   const [open, setOpen] = useState(false);
@@ -12,7 +13,7 @@ export function Header() {
   return (
     <header className="site-header">
       <div className="nav-wrap">
-        <Link className="brand" to="/">Academy</Link>
+        <Logo className="brand" />
         <button className="menu-button" aria-label="Toggle menu" onClick={() => setOpen(!open)}>☰</button>
         <nav className={open ? "nav-links open" : "nav-links"} onClick={() => setOpen(false)}>
           {links.map(([to, label]) => <NavLink key={to} to={to}>{label}</NavLink>)}
@@ -27,9 +28,17 @@ export function Footer() {
   return (
     <footer>
       <div className="footer-wrap">
-        <div><Link className="brand" to="/">Academy</Link><p>Live learning for ambitious, curious people.</p></div>
-        <div className="footer-links"><Link to="/masterclasses">Masterclasses</Link><Link to="/bootcamps">Bootcamps</Link><Link to="/become-instructor">Teach</Link><Link to="/contact">Support</Link></div>
-        <small>© 2026 Academy</small>
+        <div>
+          <Logo className="brand" showTagline variant="footer" />
+          <p>Live learning for ambitious, curious people.</p>
+        </div>
+        <div className="footer-links">
+          <Link to="/masterclasses">Masterclasses</Link>
+          <Link to="/bootcamps">Bootcamps</Link>
+          <Link to="/become-instructor">Teach</Link>
+          <Link to="/contact">Support</Link>
+        </div>
+        <small>© 2026 UpSkillr.in</small>
       </div>
     </footer>
   );

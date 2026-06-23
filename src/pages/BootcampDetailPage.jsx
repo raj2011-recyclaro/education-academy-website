@@ -47,7 +47,7 @@ export default function BootcampDetailPage() {
     },
     {
       q: "Is the certificate accredited?",
-      a: "The Academy completion certificate recognizes your work but is not a university degree or accreditation.",
+      a: "The UpSkillr.in completion certificate recognizes your work but is not a university degree or accreditation.",
     },
     {
       q: "Can my employer sponsor me?",

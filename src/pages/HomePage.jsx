@@ -259,11 +259,11 @@ export default function HomePage() {
           <div className="eyebrow">Instructor spotlight</div>
           <h2>Learn with people who have done the work.</h2>
           <p>
-            Every Academy instructor pairs deep domain experience with a
+            Every UpSkillr.in instructor pairs deep domain experience with a
             practical, generous teaching style.
           </p>
           <Link className="button secondary" to="/become-instructor">
-            Teach at Academy
+            Teach at UpSkillr.in
           </Link>
         </div>
         <InstructorCard instructorId={instructors[0].id} detailed />

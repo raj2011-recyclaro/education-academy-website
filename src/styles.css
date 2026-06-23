@@ -185,6 +185,31 @@ p {
   font: 700 1.3rem var(--serif);
   color: var(--blue);
 }
+.logo-link {
+  display: inline-flex;
+  align-items: flex-start;
+  flex-direction: column;
+  gap: 4px;
+  line-height: 1;
+  min-width: 0;
+}
+.logo-image {
+  display: block;
+  width: auto;
+  height: 72px;
+  max-width: 170px;
+  object-fit: contain;
+}
+.logo-footer .logo-image {
+  height: 50px;
+  max-width: 190px;
+}
+.logo-tagline {
+  color: var(--muted);
+  font: 700 0.72rem var(--sans);
+  letter-spacing: 0.08em;
+  text-transform: lowercase;
+}
 .nav-links {
   display: flex;
   align-items: center;
@@ -1157,6 +1182,14 @@ footer {
   .nav-wrap {
     padding: 0 16px;
   }
+  .logo-image {
+    height: 34px;
+    max-width: 138px;
+  }
+  .logo-footer .logo-image {
+    height: 44px;
+    max-width: 168px;
+  }
   .menu-button {
     display: block;
   }
@@ -1819,6 +1852,10 @@ footer .brand {
 footer a,
 footer p,
 footer small {
+  color: var(--color-mint);
+}
+
+footer .logo-tagline {
   color: var(--color-mint);
 }
 

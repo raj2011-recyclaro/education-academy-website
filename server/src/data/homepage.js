@@ -101,7 +101,7 @@ const homepageConfig = {
   testimonialSection: {
     eyebrow: "Learner stories",
     title: "Small rooms. Serious progress.",
-    description: "Grounded feedback from learners using Academy sessions to make practical progress.",
+    description: "Grounded feedback from learners using UpSkillr.in sessions to make practical progress.",
   },
   finalCTA: {
     eyebrow: "Your next chapter can start small",
