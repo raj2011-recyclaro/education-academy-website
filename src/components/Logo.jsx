@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import logoUrl from "../assets/logo.svg";
+import logoUrl from "../assets/new.svg";
 
 export default function Logo({ className = "", showTagline = false, variant = "default" }) {
   const classes = ["logo-link", `logo-${variant}`, className].filter(Boolean).join(" ");
