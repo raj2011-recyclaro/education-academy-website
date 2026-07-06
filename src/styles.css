@@ -664,6 +664,20 @@ footer {
 .instructor-card a {
   font-size: 0.78rem;
 }
+.read-more-toggle {
+  background: none;
+  border: none;
+  padding: 0;
+  margin: -8px 0 12px;
+  display: block;
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--teal-dark);
+  cursor: pointer;
+}
+.read-more-toggle:hover {
+  text-decoration: underline;
+}
 .social-proof {
   border-top: 1px solid var(--line);
 }

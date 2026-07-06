@@ -112,9 +112,26 @@ export function MobileRegistrationCTA({ label = "Reserve your seat" }) {
   return <button className="mobile-registration-cta" onClick={scrollToForm}>{label} <span>→</span></button>;
 }
 
+function truncateBio(bio, ratio = 0.5) {
+  if (!bio) return { short: "", needsToggle: false };
+  const cutoff = Math.floor(bio.length * ratio);
+  if (cutoff >= bio.length) return { short: bio, needsToggle: false };
+  const sentenceEnd = bio.indexOf(". ", cutoff);
+  const short = sentenceEnd === -1 ? bio.slice(0, cutoff) : bio.slice(0, sentenceEnd + 1);
+  return { short, needsToggle: short.length < bio.length };
+}
+
 export function InstructorCard({ instructorId, detailed = false }) {
   const instructor = getInstructor(instructorId);
-  return <div className="instructor-card card"><img src={instructor.image} alt={instructor.name} /><div><h3>{instructor.name}</h3><strong>{instructor.role}</strong>{detailed && <p>{instructor.bio}</p>}<Link to="/contact">Contact support →</Link></div></div>;
+  const [expanded, setExpanded] = useState(false);
+  const highlights = instructor.highlights?.length ? instructor.highlights : instructor.credentials?.slice(0, 5);
+  const { short, needsToggle } = truncateBio(instructor.bio);
+  return <div className="instructor-card card"><img src={instructor.image} alt={instructor.name} /><div><h3>{instructor.name}</h3><strong>{instructor.role}</strong>
+    {detailed && <p>{expanded || !needsToggle ? instructor.bio : `${short}…`}</p>}
+    {detailed && needsToggle && <button type="button" className="read-more-toggle" onClick={() => setExpanded(!expanded)}>{expanded ? "Read less" : "Read more"}</button>}
+    {detailed && highlights?.length > 0 && <div className="chips static">{highlights.map((item) => <span className="chip" key={item}>{item}</span>)}</div>}
+    <Link to="/contact">Contact support →</Link>
+  </div></div>;
 }
 
 export function NotFoundPage({ title = "This page stepped out for a class." }) {

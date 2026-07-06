@@ -1,16 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { getCategories } from "../lib/api";
 
-const fallbackCategoryNames = [
-  "Artificial Intelligence",
-  "Finance",
-  "Trading",
-  "Career Growth",
-  "Business",
-  "Spirituality",
-  "Wellness",
-  "Engineering",
-];
+const fallbackCategoryNames = ["Finance", "Trading"];
 
 export function normalizeCategoryKey(value = "") {
   return String(value)

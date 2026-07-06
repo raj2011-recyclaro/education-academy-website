@@ -10,55 +10,50 @@ import { getHomepageContent, getTestimonials } from "../lib/api";
 
 const fallbackLearnerStories = [
   {
-    quote: "The live teardown gave me a framework I used at work the very next morning.",
+    quote: "The live chart clinic gave me a framework I used on my very next trade.",
     name: "Ananya S.",
-    role: "Product Lead",
+    role: "Salaried Professional",
   },
   {
-    quote: "It felt closer to a great workshop than another online course I would never finish.",
+    quote: "It felt closer to sitting next to a real trader than another course I would never finish.",
     name: "Rohan M.",
-    role: "Data Analyst",
+    role: "Options Trader",
   },
   {
-    quote: "My capstone became the strongest project in my engineering portfolio.",
+    quote: "The NISM V-A course got me through the exam on my first attempt in three weeks.",
     name: "Meera K.",
-    role: "Software Engineer",
+    role: "Bank Relationship Manager",
   },
   {
-    quote: "The instructor helped me turn a vague AI idea into a clear prototype plan I could explain to my team.",
+    quote: "The Algo Trading course helped me turn a strategy idea into a backtested, working system.",
     name: "Kabir A.",
-    role: "Operations Manager",
+    role: "IT Professional",
   },
   {
-    quote: "The bootcamp gave me structure, deadlines, and useful feedback without making the material feel rushed.",
+    quote: "The CFA Level 1 coaching gave me structure, deadlines, and useful feedback without making the material feel rushed.",
     name: "Nisha P.",
-    role: "UX Researcher",
+    role: "Finance Graduate",
   },
 ];
 
 const fallbackHomepageContent = {
   hero: {
-    eyebrow: "Live learning, thoughtfully designed",
-    headline: "Learn from experts. Build skills that move you forward.",
+    eyebrow: "Finance and trading education, thoughtfully designed",
+    headline: "Learn markets from someone who has traded them.",
     subheadline:
-      "Join focused live masterclasses and mentor-led bootcamps built for ambitious professionals who want more than passive watching.",
+      "Join free live sessions and certification-ready courses in stock markets, technical analysis, options, algo trading, NISM, CMT, and CFA — built for ambitious Indian investors and traders.",
     primaryCTA: { label: "Explore masterclasses", href: "/masterclasses" },
-    secondaryCTA: { label: "View bootcamps", href: "/bootcamps" },
-    proofPoints: ["4.9/5 learner rating", "35k+ learning hours", "32 expert instructors"],
+    secondaryCTA: { label: "View courses", href: "/bootcamps" },
+    proofPoints: ["3,000+ students taught", "SEBI Registered Research Analyst", "13 courses across trading & certification"],
   },
   featuredMasterclass: masterclasses[0],
   trendingMasterclasses: masterclasses.slice(1, 5),
-  featuredBootcamps: bootcamps,
+  featuredBootcamps: bootcamps.slice(0, 3),
   categorySection: {
     eyebrow: "Find your next leap",
     title: "What do you want to learn?",
   },
-  categories: [
-    { name: "Artificial Intelligence" },
-    { name: "Finance" },
-    { name: "Product Strategy" },
-    { name: "Engineering" },
-  ],
+  categories: [{ name: "Finance" }, { name: "Trading" }],
   testimonialSection: {
     eyebrow: "Learner stories",
     title: "Small rooms. Serious progress.",
