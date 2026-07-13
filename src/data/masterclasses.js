@@ -2,6 +2,7 @@ export const masterclasses = [
   {
     slug: "free-orientation-basics-of-stock-market",
     title: "Basics of Stock Market — Free Orientation Session",
+    youtubeId: "Jsxn4pOe-9I",
     category: "Finance",
     instructorId: "aseem",
     date: "July 9, 2026",
@@ -28,6 +29,7 @@ export const masterclasses = [
   {
     slug: "free-orientation-technical-analysis-masterclass",
     title: "Technical Analysis Masterclass — Free Orientation Session",
+    youtubeId: "FOW0vJvf0cs",
     category: "Trading",
     instructorId: "aseem",
     date: "July 12, 2026",
@@ -80,6 +82,7 @@ export const masterclasses = [
   {
     slug: "free-orientation-options-trading",
     title: "Options Trading — Free Income Strategy Session",
+    youtubeId: "sjqFmVkwrvk",
     category: "Trading",
     instructorId: "aseem",
     date: "July 19, 2026",
@@ -107,6 +110,7 @@ export const masterclasses = [
   {
     slug: "free-orientation-algo-trading-python",
     title: "Algo Trading with Python — Free Coding Clinic",
+    youtubeId: "zFH7_SFGomo",
     category: "Trading",
     instructorId: "aseem",
     date: "July 23, 2026",
@@ -133,6 +137,7 @@ export const masterclasses = [
   {
     slug: "free-orientation-cmt-level-1",
     title: "CMT Level 1 — Free Chart Clinic and Exam Overview",
+    youtubeId: "RUc3gyfdqfA",
     category: "Trading",
     instructorId: "aseem",
     date: "July 26, 2026",

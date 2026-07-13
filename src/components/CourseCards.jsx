@@ -2,11 +2,22 @@ import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { getInstructor } from "../data/instructors";
 import { SeatProgressBar } from "./Common";
+import { CoverVideo } from "./Video";
+
+function CardImage({ to, image, coverVideo, children }) {
+  if (coverVideo) {
+    return <Link to={to} className="card-image card-image-video">
+      <CoverVideo src={coverVideo} poster={image} />
+      <div className="card-image-overlay">{children}</div>
+    </Link>;
+  }
+  return <Link to={to} className="card-image" style={{ backgroundImage: `url(${image})` }}>{children}</Link>;
+}
 
 export function CourseCard({ course }) {
   const instructor = getInstructor(course.instructorId);
   return <article className="course-card card">
-    <Link to={`/masterclasses/${course.slug}`} className="card-image" style={{ backgroundImage: `url(${course.image})` }}><span>{course.status}</span><span>{course.price}</span></Link>
+    <CardImage to={`/masterclasses/${course.slug}`} image={course.image} coverVideo={course.coverVideo}><span>{course.status}</span><span>{course.price}</span></CardImage>
     <div className="card-body"><div className="eyebrow">{course.category}</div><h3><Link to={`/masterclasses/${course.slug}`}>{course.title}</Link></h3><p>{course.summary}</p><div className="instructor-mini"><img src={instructor.image} alt="" /><span><b>{instructor.name}</b><small>{course.date} · {course.time}</small></span></div><div className="card-bottom"><span>{course.registered.toLocaleString()} registered</span><Link to={`/masterclasses/${course.slug}`}>View details →</Link></div></div>
   </article>;
 }
@@ -14,7 +25,7 @@ export function CourseCard({ course }) {
 export function BootcampCard({ course }) {
   const instructor = getInstructor(course.instructorId);
   return <article className="course-card bootcamp-card card">
-    <Link to={`/bootcamps/${course.slug}`} className="card-image" style={{ backgroundImage: `url(${course.image})` }}><span>{course.status}</span><span>Certificate</span></Link>
+    <CardImage to={`/bootcamps/${course.slug}`} image={course.image} coverVideo={course.coverVideo}><span>{course.status}</span><span>Certificate</span></CardImage>
     <div className="card-body"><div className="chips static"><span className="chip">{course.duration}</span><span className="chip">{course.level}</span><span className="chip">{course.price}</span></div><h3><Link to={`/bootcamps/${course.slug}`}>{course.title}</Link></h3><p>{course.summary}</p><div className="instructor-mini"><img src={instructor.image} alt="" /><span><b>{instructor.name}</b><small>Starts {course.startDate}</small></span></div><SeatProgressBar value={course.status === "Waitlist" ? 100 : 72} /><Link className="button secondary" to={`/bootcamps/${course.slug}`}>View bootcamp</Link></div>
   </article>;
 }

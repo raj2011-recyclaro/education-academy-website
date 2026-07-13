@@ -78,7 +78,7 @@ export default function BootcampDetailPage() {
             </div>
           )}
         </div>
-        <VideoThumbnail image={course.image} label="Program preview" />
+        <VideoThumbnail image={course.image} label="Program preview" youtubeId={course.youtubeId} />
       </section>
       <section className="detail-page section">
         <div className="detail-grid">

@@ -40,7 +40,7 @@ export default function MasterclassDetailPage() {
     <main className="detail-page section">
       <div className="detail-grid">
         <article>
-          <VideoThumbnail image={course.image} label={course.status} large />
+          <VideoThumbnail image={course.image} label={course.status} large youtubeId={course.youtubeId} />
           <div className="detail-title">
             <div className="eyebrow">{course.category} · {course.price}</div>
             <h1>{course.title}</h1>

@@ -43,8 +43,52 @@ export function CategoryFilter({ categories, active, onChange }) {
   })}</div>;
 }
 
-export function VideoThumbnail({ image, label = "Preview lesson", large = false }) {
-  return <div className={large ? "video-thumb large" : "video-thumb"} style={{ backgroundImage: `url(${image})` }}><span className="video-label">{label}</span><span className="play">▶</span></div>;
+// YouTube returns a 200 OK with a tiny 120x90 gray placeholder (not a 404)
+// when maxresdefault.jpg doesn't exist for a video, so failure has to be
+// detected by checking the loaded image's real dimensions, not onError.
+function YoutubePosterButton({ youtubeId, image, label, className, onPlay }) {
+  const maxres = `https://i.ytimg.com/vi/${youtubeId}/maxresdefault.jpg`;
+  const hq = `https://i.ytimg.com/vi/${youtubeId}/hqdefault.jpg`;
+  const [poster, setPoster] = useState(maxres);
+
+  return (
+    <button type="button" className={className} style={{ border: 0, cursor: "pointer", padding: 0 }} onClick={onPlay}>
+      <img
+        className="video-thumb-poster"
+        src={poster}
+        alt=""
+        onLoad={(e) => {
+          if (poster === maxres && e.currentTarget.naturalWidth <= 120) setPoster(hq);
+        }}
+        onError={() => setPoster(image)}
+      />
+      <span className="video-label">{label}</span>
+      <span className="play">▶</span>
+    </button>
+  );
+}
+
+export function VideoThumbnail({ image, label = "Preview lesson", large = false, youtubeId }) {
+  const [playing, setPlaying] = useState(false);
+  const className = large ? "video-thumb large" : "video-thumb";
+
+  if (youtubeId && playing) {
+    return <div className={className}><iframe
+      src={`https://www.youtube-nocookie.com/embed/${youtubeId}?autoplay=1`}
+      title={label}
+      allow="accelerated-video; autoplay; encrypted-media; picture-in-picture"
+      allowFullScreen
+    /></div>;
+  }
+
+  if (youtubeId) {
+    return <YoutubePosterButton youtubeId={youtubeId} image={image} label={label} className={className} onPlay={() => setPlaying(true)} />;
+  }
+
+  return <div className={className} style={{ backgroundImage: `url(${image})` }}>
+    <span className="video-label">{label}</span>
+    <span className="play">▶</span>
+  </div>;
 }
 
 export function CountdownBadge() {

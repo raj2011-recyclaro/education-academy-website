@@ -1,6 +1,7 @@
 export const bootcamps = [
   {
     slug: "basics-of-stock-market",
+    youtubeId: "Jsxn4pOe-9I",
     code: "USK-SM-01",
     title: "Basics of Stock Market",
     category: "Finance",
@@ -62,6 +63,7 @@ export const bootcamps = [
   },
   {
     slug: "technical-analysis-masterclass",
+    youtubeId: "FOW0vJvf0cs",
     code: "USK-TA-02",
     title: "Technical Analysis Masterclass",
     category: "Trading",
@@ -253,6 +255,7 @@ export const bootcamps = [
   },
   {
     slug: "nism-series-x-a-investment-adviser",
+    youtubeId: "YMM1w3L-Sdk",
     code: "USK-NISM-XA",
     title: "NISM Series X-A: Investment Adviser Level 1 Certification",
     category: "Finance",
@@ -315,6 +318,7 @@ export const bootcamps = [
   },
   {
     slug: "options-trading-basics-to-income-strategy",
+    youtubeId: "sjqFmVkwrvk",
     code: "USK-OPT-01",
     title: "Options Trading: Basics to Income Strategy",
     category: "Trading",
@@ -383,6 +387,7 @@ export const bootcamps = [
   },
   {
     slug: "algo-trading-with-python",
+    youtubeId: "zFH7_SFGomo",
     code: "USK-ALGO-01",
     title: "Algo Trading with Python",
     category: "Trading",
@@ -455,6 +460,7 @@ export const bootcamps = [
   },
   {
     slug: "cmt-level-1-foundation-of-technical-analysis",
+    youtubeId: "RUc3gyfdqfA",
     code: "USK-CMT-L1",
     title: "CMT Level 1: Foundation of Technical Analysis",
     category: "Trading",
@@ -664,6 +670,7 @@ export const bootcamps = [
   },
   {
     slug: "cfa-level-1-coaching",
+    youtubeId: "nx7jd4vhw_k",
     code: "USK-CFA-L1",
     title: "CFA Level 1 Coaching",
     category: "Finance",
