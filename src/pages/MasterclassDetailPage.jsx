@@ -9,38 +9,36 @@ import {
   StickyRegistrationCard,
   VideoThumbnail,
 } from "../components/Common";
-import { getMasterclass } from "../lib/api";
+import { masterclasses } from "../data/masterclasses";
+import { getVideos } from "../lib/api";
 
 export default function MasterclassDetailPage() {
   const { slug } = useParams();
-  const [course, setCourse] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const course = masterclasses.find((item) => item.slug === slug) || null;
+  const [video, setVideo] = useState(null);
 
   useEffect(() => {
     let active = true;
-    setLoading(true);
-    getMasterclass(slug)
-      .then((data) => {
-        if (active) setCourse(data);
-      })
-      .finally(() => {
-        if (active) setLoading(false);
-      });
+    getVideos({ type: "orientation", program: slug }).then((videos) => {
+      if (active) setVideo(videos[0] || null);
+    });
     return () => {
       active = false;
     };
   }, [slug]);
 
-  if (loading) {
-    return <main className="center-page"><p>Loading masterclass...</p></main>;
-  }
   if (!course) return <NotFoundPage title="That masterclass is not on the schedule." />;
 
   return (
     <main className="detail-page section">
       <div className="detail-grid">
         <article>
-          <VideoThumbnail image={course.image} label={course.status} large youtubeId={course.youtubeId} />
+          <VideoThumbnail
+            image={video?.thumbnailUrl || course.image}
+            label={course.status}
+            large
+            youtubeId={video?.youtubeId || course.youtubeId}
+          />
           <div className="detail-title">
             <div className="eyebrow">{course.category} · {course.price}</div>
             <h1>{course.title}</h1>

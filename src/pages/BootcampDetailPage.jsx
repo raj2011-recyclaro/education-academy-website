@@ -9,32 +9,24 @@ import {
   StickyRegistrationCard,
   VideoThumbnail,
 } from "../components/Common";
-import { refundNote } from "../data/bootcamps";
-import { getBootcamp } from "../lib/api";
+import { bootcamps, refundNote } from "../data/bootcamps";
+import { getVideos } from "../lib/api";
 
 export default function BootcampDetailPage() {
   const { slug } = useParams();
-  const [course, setCourse] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const course = bootcamps.find((item) => item.slug === slug) || null;
+  const [video, setVideo] = useState(null);
 
   useEffect(() => {
     let active = true;
-    setLoading(true);
-    getBootcamp(slug)
-      .then((data) => {
-        if (active) setCourse(data);
-      })
-      .finally(() => {
-        if (active) setLoading(false);
-      });
+    getVideos({ type: "course", program: slug }).then((videos) => {
+      if (active) setVideo(videos[0] || null);
+    });
     return () => {
       active = false;
     };
   }, [slug]);
 
-  if (loading) {
-    return <main className="center-page"><p>Loading bootcamp...</p></main>;
-  }
   if (!course) return <NotFoundPage title="That bootcamp cohort could not be found." />;
 
   const curriculum = (course.curriculum || []).map((item, index) => ({
@@ -78,7 +70,11 @@ export default function BootcampDetailPage() {
             </div>
           )}
         </div>
-        <VideoThumbnail image={course.image} label="Program preview" youtubeId={course.youtubeId} />
+        <VideoThumbnail
+          image={video?.thumbnailUrl || course.image}
+          label="Program preview"
+          youtubeId={video?.youtubeId || course.youtubeId}
+        />
       </section>
       <section className="detail-page section">
         <div className="detail-grid">

@@ -554,6 +554,21 @@ footer {
   align-items: start;
   justify-content: space-between;
   padding: 12px;
+  position: relative;
+}
+.card-image-play {
+  position: absolute;
+  right: 12px;
+  bottom: 12px;
+  width: 34px;
+  height: 34px;
+  display: grid;
+  place-items: center;
+  background: rgba(4, 95, 95, 0.94);
+  color: var(--white);
+  border-radius: 50%;
+  padding-left: 2px;
+  font-size: 0.7rem;
 }
 .cover-video {
   width: 100%;

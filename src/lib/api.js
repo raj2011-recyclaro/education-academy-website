@@ -1,6 +1,3 @@
-import { bootcamps as localBootcamps } from "../data/bootcamps";
-import { masterclasses as localMasterclasses } from "../data/masterclasses";
-
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL?.replace(/\/$/, "") || "";
 
 function createLocalId(prefix) {
@@ -31,46 +28,46 @@ async function request(path, options = {}) {
   return payload.data ?? payload;
 }
 
-export async function getMasterclasses() {
-  try {
-    return await request("/api/masterclasses");
-  } catch (error) {
-    console.warn("Using local masterclass data:", error.message);
-    return localMasterclasses;
-  }
-}
-
-export async function getMasterclass(slug) {
-  try {
-    return await request(`/api/masterclasses/${slug}`);
-  } catch (error) {
-    if (error.status === 404) return null;
-    console.warn("Using local masterclass detail:", error.message);
-    return localMasterclasses.find((item) => item.slug === slug) || null;
-  }
-}
-
-export async function getBootcamps() {
-  try {
-    return await request("/api/bootcamps");
-  } catch (error) {
-    console.warn("Using local bootcamp data:", error.message);
-    return localBootcamps;
-  }
-}
-
-export async function getBootcamp(slug) {
-  try {
-    return await request(`/api/bootcamps/${slug}`);
-  } catch (error) {
-    if (error.status === 404) return null;
-    console.warn("Using local bootcamp detail:", error.message);
-    return localBootcamps.find((item) => item.slug === slug) || null;
-  }
-}
-
 export async function getHomepageContent() {
   return request("/api/homepage");
+}
+
+function mapVideo(row) {
+  return {
+    id: row.id,
+    title: row.title,
+    youtubeUrl: row.youtube_url,
+    youtubeId: row.youtube_video_id,
+    videoType: row.video_type,
+    programSlug: row.related_program_slug,
+    description: row.description,
+    thumbnailUrl: row.thumbnail_url,
+    posterUrl: row.thumbnail_url || (row.youtube_video_id ? `https://i.ytimg.com/vi/${row.youtube_video_id}/hqdefault.jpg` : null),
+    status: row.status,
+    sortOrder: row.sort_order,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+    categoryId: row.category_id,
+    categorySlug: row.category_slug,
+    categoryName: row.category_name,
+  };
+}
+
+// type: "orientation" | "course", category: category slug, program: related program slug.
+export async function getVideos({ type, category, program } = {}) {
+  const params = new URLSearchParams();
+  if (type) params.set("type", type);
+  if (category) params.set("category", category);
+  if (program) params.set("program", program);
+  const queryString = params.toString();
+
+  try {
+    const data = await request(`/api/videos${queryString ? `?${queryString}` : ""}`);
+    return (Array.isArray(data) ? data : []).map(mapVideo);
+  } catch (error) {
+    console.warn("Could not load videos:", error.message);
+    return [];
+  }
 }
 
 export async function getCategories({ featured = false } = {}) {
@@ -110,6 +107,24 @@ export async function joinWaitlist(payload) {
     return {
       id: createLocalId("wait"),
       status: "joined",
+      ...payload,
+      createdAt: new Date().toISOString(),
+      localOnly: true,
+    };
+  }
+}
+
+export async function submitInstructorApplication(payload) {
+  try {
+    return await request("/api/instructor-applications", {
+      method: "POST",
+      body: JSON.stringify(payload),
+    });
+  } catch (error) {
+    if (API_BASE_URL) throw error;
+    return {
+      id: createLocalId("instructor"),
+      status: "received",
       ...payload,
       createdAt: new Date().toISOString(),
       localOnly: true,

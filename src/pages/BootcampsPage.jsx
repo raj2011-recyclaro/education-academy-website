@@ -1,32 +1,32 @@
 import { useEffect, useState } from "react";
 import { CategoryFilter } from "../components/Common";
 import { BootcampCard } from "../components/CourseCards";
-import { bootcamps as fallbackBootcamps } from "../data/bootcamps";
+import { bootcamps } from "../data/bootcamps";
 import { categoryMatches, useCategories } from "../hooks/useCategories";
-import { getBootcamps, joinWaitlist } from "../lib/api";
+import { getVideos, joinWaitlist } from "../lib/api";
 
 export default function BootcampsPage() {
-  const [courses, setCourses] = useState(fallbackBootcamps);
   const [category, setCategory] = useState("all");
-  const [loading, setLoading] = useState(true);
   const [waitlistStatus, setWaitlistStatus] = useState("");
+  const [videosBySlug, setVideosBySlug] = useState({});
   const { categories, isLoading: categoriesLoading } = useCategories();
 
   useEffect(() => {
     let active = true;
-    getBootcamps()
-      .then((data) => {
-        if (active) setCourses(data);
-      })
-      .finally(() => {
-        if (active) setLoading(false);
+    getVideos({ type: "course" }).then((videos) => {
+      if (!active) return;
+      const bySlug = {};
+      videos.forEach((video) => {
+        if (video.programSlug && !bySlug[video.programSlug]) bySlug[video.programSlug] = video;
       });
+      setVideosBySlug(bySlug);
+    });
     return () => {
       active = false;
     };
   }, []);
 
-  const results = courses.filter(
+  const results = bootcamps.filter(
     (item) => categoryMatches(category, item.category),
   );
 
@@ -65,10 +65,10 @@ export default function BootcampsPage() {
         <div className="filter-panel">
           <CategoryFilter categories={categories} active={category} onChange={setCategory} />
         </div>
-        {(loading || categoriesLoading) && <p className="loading-note">Loading cohort pathways...</p>}
+        {categoriesLoading && <p className="loading-note">Loading cohort pathways...</p>}
         <div className="grid three">
           {results.map((course) => (
-            <BootcampCard key={course.slug} course={course} />
+            <BootcampCard key={course.slug} course={course} video={videosBySlug[course.slug]} />
           ))}
         </div>
         <div className="waitlist-panel">

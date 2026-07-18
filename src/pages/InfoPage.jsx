@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { sendContactMessage } from "../lib/api";
+import { sendContactMessage, submitInstructorApplication } from "../lib/api";
 
 export default function InfoPage({ type }) {
   const [sent, setSent] = useState(false);
@@ -11,12 +11,22 @@ export default function InfoPage({ type }) {
     setStatus("Sending...");
     const formData = new FormData(event.currentTarget);
     try {
-      await sendContactMessage({
-        fullName: formData.get("fullName"),
-        email: formData.get("email"),
-        topic: instructor ? "Instructor application" : "Contact request",
-        message: formData.get("message"),
-      });
+      if (instructor) {
+        await submitInstructorApplication({
+          fullName: formData.get("fullName"),
+          email: formData.get("email"),
+          phone: formData.get("phone"),
+          topic: formData.get("topic"),
+          message: formData.get("message"),
+        });
+      } else {
+        await sendContactMessage({
+          fullName: formData.get("fullName"),
+          email: formData.get("email"),
+          topic: "Contact request",
+          message: formData.get("message"),
+        });
+      }
       setSent(true);
     } catch (error) {
       setStatus(error.message || "Message could not be sent.");
@@ -63,8 +73,12 @@ export default function InfoPage({ type }) {
           <form onSubmit={submit}>
             <label>Full name<input required name="fullName" /></label>
             <label>Email<input required name="email" type="email" /></label>
+            {instructor && <>
+              <label>Phone<input required name="phone" type="tel" /></label>
+              <label>Topic you'd like to teach<input required name="topic" /></label>
+            </>}
             <label>
-              {instructor ? "What would you love to teach?" : "How can we help?"}
+              {instructor ? "Tell us about your experience" : "How can we help?"}
               <textarea required name="message" rows="6" />
             </label>
             {status && <p className="form-status">{status}</p>}

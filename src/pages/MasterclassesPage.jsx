@@ -2,9 +2,9 @@ import { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { CategoryFilter, SearchBar } from "../components/Common";
 import { CourseCard } from "../components/CourseCards";
-import { masterclasses as fallbackMasterclasses } from "../data/masterclasses";
+import { masterclasses } from "../data/masterclasses";
 import { categoryMatches, normalizeCategoryKey, useCategories } from "../hooks/useCategories";
-import { getMasterclasses } from "../lib/api";
+import { getVideos } from "../lib/api";
 
 function normalizeInitialCategory(value) {
   const normalized = normalizeCategoryKey(value || "all");
@@ -13,22 +13,22 @@ function normalizeInitialCategory(value) {
 
 export default function MasterclassesPage() {
   const [params] = useSearchParams();
-  const [courses, setCourses] = useState(fallbackMasterclasses);
-  const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState(params.get("search") || "");
   const [category, setCategory] = useState(normalizeInitialCategory(params.get("category")));
   const [sort, setSort] = useState("Soonest");
+  const [videosBySlug, setVideosBySlug] = useState({});
   const { categories, isLoading: categoriesLoading } = useCategories();
 
   useEffect(() => {
     let active = true;
-    getMasterclasses()
-      .then((data) => {
-        if (active) setCourses(data);
-      })
-      .finally(() => {
-        if (active) setLoading(false);
+    getVideos({ type: "orientation" }).then((videos) => {
+      if (!active) return;
+      const bySlug = {};
+      videos.forEach((video) => {
+        if (video.programSlug && !bySlug[video.programSlug]) bySlug[video.programSlug] = video;
       });
+      setVideosBySlug(bySlug);
+    });
     return () => {
       active = false;
     };
@@ -36,7 +36,7 @@ export default function MasterclassesPage() {
 
   const results = useMemo(
     () =>
-      courses
+      masterclasses
         .filter(
           (item) =>
             categoryMatches(category, item.category) &&
@@ -49,7 +49,7 @@ export default function MasterclassesPage() {
               ? a.price.localeCompare(b.price)
               : 0,
         ),
-    [courses, search, category, sort],
+    [search, category, sort],
   );
 
   return (
@@ -77,11 +77,11 @@ export default function MasterclassesPage() {
           ))}
         </div>
       </div>
-      {(loading || categoriesLoading) && <p className="loading-note">Loading live catalog...</p>}
+      {categoriesLoading && <p className="loading-note">Loading live catalog...</p>}
       {results.length ? (
         <div className="grid three">
           {results.map((course) => (
-            <CourseCard key={course.slug} course={course} />
+            <CourseCard key={course.slug} course={course} video={videosBySlug[course.slug]} />
           ))}
         </div>
       ) : (
