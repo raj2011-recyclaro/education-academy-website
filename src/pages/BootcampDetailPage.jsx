@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
+import { EnrollButton } from "../components/Auth";
 import {
   FAQAccordion,
   InstructorCard,
@@ -10,12 +11,26 @@ import {
   VideoThumbnail,
 } from "../components/Common";
 import { bootcamps, refundNote } from "../data/bootcamps";
-import { getVideos } from "../lib/api";
+import { getBootcamp, getVideos } from "../lib/api";
 
 export default function BootcampDetailPage() {
   const { slug } = useParams();
-  const course = bootcamps.find((item) => item.slug === slug) || null;
+  const fallbackCourse = bootcamps.find((item) => item.slug === slug) || null;
+  const [dbCourse, setDbCourse] = useState(null);
+  const course = dbCourse?.slug === slug ? dbCourse : fallbackCourse;
   const [video, setVideo] = useState(null);
+
+  useEffect(() => {
+    let active = true;
+    getBootcamp(slug)
+      .then((data) => {
+        if (active && data) setDbCourse(data);
+      })
+      .catch((error) => console.warn("Using fallback bootcamp:", error.message));
+    return () => {
+      active = false;
+    };
+  }, [slug]);
 
   useEffect(() => {
     let active = true;
@@ -69,6 +84,7 @@ export default function BootcampDetailPage() {
               <span><b>{course.examFee}</b> exam fee</span>
             </div>
           )}
+          <EnrollButton courseType="bootcamp" courseSlug={course.slug} />
         </div>
         <VideoThumbnail
           image={video?.thumbnailUrl || course.image}
@@ -117,7 +133,7 @@ export default function BootcampDetailPage() {
             </section>
             <section className="content-section">
               <h2>Your mentor</h2>
-              <InstructorCard instructorId={course.instructorId} detailed />
+              <InstructorCard instructorId={course.instructorId} instructor={course.instructor} detailed />
             </section>
             {course.refundConditions?.length > 0 && (
               <section className="content-section">

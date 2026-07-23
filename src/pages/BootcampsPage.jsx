@@ -1,15 +1,28 @@
 import { useEffect, useState } from "react";
 import { CategoryFilter } from "../components/Common";
 import { BootcampCard } from "../components/CourseCards";
-import { bootcamps } from "../data/bootcamps";
+import { bootcamps as fallbackBootcamps } from "../data/bootcamps";
 import { categoryMatches, useCategories } from "../hooks/useCategories";
-import { getVideos, joinWaitlist } from "../lib/api";
+import { getBootcamps, getVideos, joinWaitlist } from "../lib/api";
 
 export default function BootcampsPage() {
   const [category, setCategory] = useState("all");
   const [waitlistStatus, setWaitlistStatus] = useState("");
   const [videosBySlug, setVideosBySlug] = useState({});
+  const [bootcamps, setBootcamps] = useState(fallbackBootcamps);
   const { categories, isLoading: categoriesLoading } = useCategories();
+
+  useEffect(() => {
+    let active = true;
+    getBootcamps()
+      .then((data) => {
+        if (active && data?.length) setBootcamps(data);
+      })
+      .catch((error) => console.warn("Using fallback bootcamps:", error.message));
+    return () => {
+      active = false;
+    };
+  }, []);
 
   useEffect(() => {
     let active = true;

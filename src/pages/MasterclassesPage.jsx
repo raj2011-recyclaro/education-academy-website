@@ -2,9 +2,9 @@ import { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { CategoryFilter, SearchBar } from "../components/Common";
 import { CourseCard } from "../components/CourseCards";
-import { masterclasses } from "../data/masterclasses";
+import { masterclasses as fallbackMasterclasses } from "../data/masterclasses";
 import { categoryMatches, normalizeCategoryKey, useCategories } from "../hooks/useCategories";
-import { getVideos } from "../lib/api";
+import { getMasterclasses, getVideos } from "../lib/api";
 
 function normalizeInitialCategory(value) {
   const normalized = normalizeCategoryKey(value || "all");
@@ -17,7 +17,20 @@ export default function MasterclassesPage() {
   const [category, setCategory] = useState(normalizeInitialCategory(params.get("category")));
   const [sort, setSort] = useState("Soonest");
   const [videosBySlug, setVideosBySlug] = useState({});
+  const [masterclasses, setMasterclasses] = useState(fallbackMasterclasses);
   const { categories, isLoading: categoriesLoading } = useCategories();
+
+  useEffect(() => {
+    let active = true;
+    getMasterclasses()
+      .then((data) => {
+        if (active && data?.length) setMasterclasses(data);
+      })
+      .catch((error) => console.warn("Using fallback masterclasses:", error.message));
+    return () => {
+      active = false;
+    };
+  }, []);
 
   useEffect(() => {
     let active = true;
@@ -49,7 +62,7 @@ export default function MasterclassesPage() {
               ? a.price.localeCompare(b.price)
               : 0,
         ),
-    [search, category, sort],
+    [search, category, sort, masterclasses],
   );
 
   return (

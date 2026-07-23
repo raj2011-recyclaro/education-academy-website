@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
+import { EnrollButton } from "../components/Auth";
 import {
   FAQAccordion,
   InstructorCard,
@@ -10,12 +11,26 @@ import {
   VideoThumbnail,
 } from "../components/Common";
 import { masterclasses } from "../data/masterclasses";
-import { getVideos } from "../lib/api";
+import { getMasterclass, getVideos } from "../lib/api";
 
 export default function MasterclassDetailPage() {
   const { slug } = useParams();
-  const course = masterclasses.find((item) => item.slug === slug) || null;
+  const fallbackCourse = masterclasses.find((item) => item.slug === slug) || null;
+  const [dbCourse, setDbCourse] = useState(null);
+  const course = dbCourse?.slug === slug ? dbCourse : fallbackCourse;
   const [video, setVideo] = useState(null);
+
+  useEffect(() => {
+    let active = true;
+    getMasterclass(slug)
+      .then((data) => {
+        if (active && data) setDbCourse(data);
+      })
+      .catch((error) => console.warn("Using fallback masterclass:", error.message));
+    return () => {
+      active = false;
+    };
+  }, [slug]);
 
   useEffect(() => {
     let active = true;
@@ -48,8 +63,9 @@ export default function MasterclassDetailPage() {
               <span>{course.time}</span>
               <span>{course.registered.toLocaleString()} registered</span>
             </div>
+            <EnrollButton courseType="masterclass" courseSlug={course.slug} />
           </div>
-          <InstructorCard instructorId={course.instructorId} detailed />
+          <InstructorCard instructorId={course.instructorId} instructor={course.instructor} detailed />
           <ContentSection title="Overview"><p>{course.overview}</p></ContentSection>
           <ContentSection title="What you will learn">
             <div className="learn-grid">

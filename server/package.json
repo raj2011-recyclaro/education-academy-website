@@ -6,12 +6,17 @@
   "scripts": {
     "dev": "node --watch src/index.js",
     "db:migrate": "node src/scripts/runMigrations.js",
+    "db:backfill-courses": "node src/scripts/backfillCourses.js",
     "start": "node src/index.js"
   },
   "dependencies": {
     "cors": "^2.8.5",
     "dotenv": "^16.4.7",
     "express": "^4.21.2",
+    "express-rate-limit": "^8.6.0",
+    "google-auth-library": "^10.9.0",
+    "jsonwebtoken": "^9.0.3",
+    "multer": "^2.2.0",
     "pg": "^8.22.0"
   }
 }

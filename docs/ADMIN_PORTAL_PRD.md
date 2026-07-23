@@ -184,9 +184,123 @@ Accept any of: `https://www.youtube.com/watch?v=ID`, `https://youtu.be/ID`, `htt
 6. **Cutover**: founder adds real videos through the UI; verify they render on the live site with no redeploy.
 7. **Env vars to add**: `JWT_SECRET` (Render), nothing new needed on Hostinger (frontend still just needs `VITE_API_BASE_URL`, already set).
 
-## 13. Phase 2 (explicitly out of scope for v1, noted for future planning)
+## 13. Phase 2: Bootcamps & Masterclasses migration (detailed spec)
 
-- Migrate `bootcamps`, `masterclasses`, `homepage`, `testimonials` from hardcoded JS into Postgres + give the founder full CRUD over them (this is the "every direction" version of the admin portal — v1 covers videos + topics + leads, which is the highest-leverage slice since it's the founder's most frequent, most static-code-blocked task today).
+Out of scope for v1 build, but specified here in full so it's ready to pick up as its own project once v1 (videos/categories/leads) ships. This is the highest-effort remaining piece of "every direction" content ownership for the founder: today, adding a new bootcamp or masterclass, or editing a price, curriculum module, or FAQ on an existing one, requires a developer to hand-edit `src/data/bootcamps.js` / `src/data/masterclasses.js` (and the mirrored `server/src/data/*.js`) and redeploy both the frontend and backend.
+
+### 13.1 Current state (verified against the repo)
+
+- `BootcampsPage.jsx`, `BootcampDetailPage.jsx`, `MasterclassesPage.jsx`, `MasterclassDetailPage.jsx` all import directly from `src/data/bootcamps.js` / `src/data/masterclasses.js` — no network call for course content at all (the earlier attempt to fetch `/api/bootcamps` / `/api/masterclasses` was removed because those endpoints 404 on the current backend; only `/api/videos` and `/api/categories` are DB-backed today).
+- `server/src/index.js` still serves `GET /api/bootcamps`, `GET /api/bootcamps/:slug`, `GET /api/masterclasses`, `GET /api/masterclasses/:slug` from the static `server/src/data/{bootcamps,masterclasses}.js` files — these routes exist but are not what the frontend currently calls.
+- Every bootcamp/masterclass object is a large, deeply-nested plain JS object (see field inventory below) — there is no existing partial-DB or hybrid state to migrate from.
+
+### 13.2 Field inventory (source of truth for the schema below)
+
+**Bootcamp** (`src/data/bootcamps.js`): `slug`, `youtubeId`, `code`, `title`, `category`, `instructorId`, `duration`, `level`, `deliveryMode`, `liveSessions`, `startDate`, `certificate`, `price`, `status`, `idealFor`, `examBody`, `examFee`, `passMark`, `image`, `summary`, `whyCourse`, `aboutCourse`, `whoShouldAttend[]`, `outcomes[]`, `curriculum[]` (each `{ title, topics }`), `refundConditions[]`, `faq[]` (each `{ q, a }`), `disclaimer` (optional).
+
+**Masterclass** (`src/data/masterclasses.js`): `slug`, `title`, `youtubeId`, `category`, `instructorId`, `date`, `time`, `registered`, `price`, `status`, `image`, `summary`, `overview`, `learn[]`, `audience[]`, `agenda[]`, `disclaimer` (optional).
+
+Both share a core shape (`slug`, `title`, `category`, `instructorId`, `price`, `status`, `image`, `summary`) but diverge enough (bootcamp's `curriculum`/`faq`/refund logic vs. masterclass's `date`/`time`/`registered` live-session fields) that they should be **two tables, not one polymorphic table** — forcing them into one schema would make the nested-array columns ambiguous and the admin form harder to build correctly.
+
+### 13.3 Data model (new tables)
+
+### `bootcamps`
+| column | type | notes |
+|---|---|---|
+| id | uuid pk | |
+| slug | text unique | url-safe, auto-generated from title, editable |
+| title | text | |
+| code | text nullable | internal course code, e.g. `USK-SM-01` |
+| category_id | uuid fk → categories.id | reuses the `categories` table from §7 |
+| instructor_id | text | matches existing keys in `src/data/instructors.js` (instructor records stay static in v1 — not in scope here) |
+| duration | text | free text, e.g. `"6 weeks"` |
+| level | text | free text, e.g. `"Beginner"` |
+| delivery_mode | text | |
+| live_sessions | text | |
+| start_date | text | free text (not a real date type — existing data uses phrases like `"Open enrollment"`) |
+| certificate | boolean default true | |
+| price | text | free text incl. currency symbol, matches existing `"₹2,499"` convention |
+| status | text | e.g. `"Enrollment open"`, `"Waitlist"` — free text in v1, matching current usage; not the same as the `draft`/`published` visibility status below |
+| ideal_for | text nullable | |
+| exam_body | text nullable | |
+| exam_fee | text nullable | |
+| pass_mark | text nullable | |
+| image | text | URL |
+| summary | text | |
+| why_course | text nullable | |
+| about_course | text nullable | |
+| who_should_attend | jsonb | array of strings |
+| outcomes | jsonb | array of strings |
+| curriculum | jsonb | array of `{ title, topics }` |
+| refund_conditions | jsonb | array of strings |
+| faq | jsonb | array of `{ q, a }` |
+| disclaimer | text nullable | |
+| visibility_status | text check in (`'draft'`, `'published'`) default `'draft'` | admin staging flag, separate from the free-text `status` marketing label above |
+| sort_order | int default 0 | |
+| created_at / updated_at | timestamptz | |
+
+### `masterclasses`
+| column | type | notes |
+|---|---|---|
+| id | uuid pk | |
+| slug | text unique | |
+| title | text | |
+| category_id | uuid fk → categories.id | |
+| instructor_id | text | |
+| date | text | free text, e.g. `"July 9, 2026"` — matches current non-ISO convention |
+| time | text | e.g. `"7:00 PM IST"` |
+| registered | int default 0 | |
+| price | text | usually `"Free"` for orientation sessions |
+| status | text | e.g. `"Live"`, `"Upcoming"` — free text marketing label, distinct from `visibility_status` |
+| image | text | URL |
+| summary | text | |
+| overview | text nullable | |
+| learn | jsonb | array of strings |
+| audience | jsonb | array of strings |
+| agenda | jsonb | array of strings |
+| disclaimer | text nullable | |
+| visibility_status | text check in (`'draft'`, `'published'`) default `'draft'` | |
+| sort_order | int default 0 | |
+| created_at / updated_at | timestamptz | |
+
+Both tables intentionally use `jsonb` for the nested array fields (curriculum, faq, outcomes, etc.) rather than child tables. This keeps the migration a single `INSERT` per existing JS object (straightforward one-time backfill script from the current `src/data/*.js` arrays) and matches how the frontend already consumes these fields (as arrays on the course object) — no response-shape change needed on read. The tradeoff, noted for the implementer: individual FAQ/curriculum entries can't be queried or indexed independently, which is fine at this content volume (tens of items, not thousands).
+
+`youtube_video_id`/video linkage is **not** duplicated here — it stays exclusively in the `videos` table (§7) and is joined at read time via `videos.related_program_slug = bootcamps.slug` / `= masterclasses.slug`, exactly as `/api/videos?program=<slug>` already works today. Do not re-add a `youtube_id` column to these tables.
+
+### 13.4 API contract additions
+
+Admin routes (JWT-protected, same pattern as §8):
+
+| Method | Path | Notes |
+|---|---|---|
+| GET | `/api/admin/bootcamps` | query: `status` (draft/published); returns all |
+| POST | `/api/admin/bootcamps` | full create |
+| GET | `/api/admin/bootcamps/:id` | |
+| PUT | `/api/admin/bootcamps/:id` | full update |
+| PATCH | `/api/admin/bootcamps/:id/status` | body: `{ visibility_status }` |
+| DELETE | `/api/admin/bootcamps/:id` | |
+| GET / POST / PUT / PATCH / DELETE | `/api/admin/masterclasses[/:id]` | same shape as bootcamps, mirrored |
+
+Public routes: `GET /api/bootcamps`, `GET /api/bootcamps/:slug`, `GET /api/masterclasses`, `GET /api/masterclasses/:slug` **already exist** in `server/src/index.js` — this migration changes their implementation from reading `server/src/data/*.js` to querying the new tables (`WHERE visibility_status = 'published'`), while keeping the exact same response JSON shape the frontend already expects. That means `src/lib/api.js`'s `getBootcamps()`/`getBootcamp()`/`getMasterclasses()`/`getMasterclass()` helpers (removed from the frontend in the interim because the routes weren't DB-backed yet) get reinstated, and `BootcampsPage.jsx`/`BootcampDetailPage.jsx`/`MasterclassesPage.jsx`/`MasterclassDetailPage.jsx` switch back from importing `src/data/*.js` directly to calling those API helpers, with `src/data/bootcamps.js`/`src/data/masterclasses.js` kept only as the `catch`-block offline fallback (same pattern already used elsewhere in `api.js`).
+
+### 13.5 Admin UI additions
+
+- `/admin/bootcamps` — table (title, category, status, visibility), "Add Bootcamp" opens a multi-section form: basics (title/slug/price/category/instructor/image) → content (why/about/ideal-for) → curriculum builder (repeatable title+topics rows) → outcomes/who-should-attend (repeatable text list) → refund conditions (repeatable text list) → FAQ builder (repeatable Q+A rows) → Save as Draft / Publish.
+- `/admin/masterclasses` — same pattern, simpler: basics (title/slug/date/time/price/category/instructor/image) → content (overview) → learn/audience/agenda (repeatable text lists) → Save as Draft / Publish.
+- This is the most form-heavy screen in the whole admin portal because of the repeatable nested fields (curriculum, FAQ, outcomes, etc.) — for v1 of *this* phase, consider a plain textarea with one item per line for each list field (simplest to build, still self-serve) rather than a fully bespoke drag-and-drop row editor, and revisit if the founder finds that clunky in practice.
+
+### 13.6 Rollout (additive to §12)
+
+1. Migration: `bootcamps`, `masterclasses` tables per §13.3.
+2. Backfill script: one-time script reading `src/data/bootcamps.js` / `src/data/masterclasses.js` and inserting each entry as a row (`visibility_status = 'published'` for all existing entries, so nothing regresses on cutover).
+3. Backend: DB-back the existing `/api/bootcamps*` / `/api/masterclasses*` routes; add the `/api/admin/bootcamps*` / `/api/admin/masterclasses*` CRUD routes.
+4. Frontend: reinstate `getBootcamps`/`getBootcamp`/`getMasterclasses`/`getMasterclass` in `src/lib/api.js`; switch the four pages back to calling them (local `src/data/*.js` import becomes the fallback, not the primary source).
+5. Admin UI: `/admin/bootcamps` and `/admin/masterclasses` CRUD screens.
+6. Cutover: founder edits/adds a bootcamp through the UI; verify it renders on the live site with no redeploy, before deleting anything from `src/data/*.js`/`server/src/data/*.js` (keep those files until the DB path is confirmed working end-to-end in production, then delete as a follow-up cleanup commit).
+
+## 14. Other Phase 2 items (out of scope for v1)
+
+- Migrate `homepage`, `testimonials` from hardcoded JS into Postgres the same way (lower priority than bootcamps/masterclasses — changes less often).
 - Image upload for course/thumbnail overrides (v1 relies on YouTube's auto-thumbnail).
 - Multiple admin users with roles.
 - Drag-and-drop reordering UI (v1's `reorder` endpoint exists but UI can start with a simple numeric `sort_order` field).

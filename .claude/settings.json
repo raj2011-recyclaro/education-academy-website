@@ -1,0 +1,24 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(nohup npm run dev)",
+      "Bash(disown)",
+      "Read(//tmp/**)",
+      "Bash(sleep 2; cat /tmp/vite-dev.log)",
+      "Bash(curl -sf http://localhost:5173)",
+      "Bash(npx --no-install playwright --version)",
+      "Bash(node -e \"require.resolve\\('playwright'\\)\")",
+      "Bash(mkdir -p /tmp/shots)",
+      "Bash(npx --yes playwright screenshot --viewport-size=1440,1400 --full-page http://localhost:5173/ /tmp/shots/home.png)",
+      "Bash(xargs -I{} echo {})",
+      "Edit(/.claude/skills/platform-auth/**)",
+      "Bash(node -e ' *)",
+      "Bash(node -e \"console.log\\(require\\('crypto'\\).randomBytes\\(32\\).toString\\('hex'\\)\\)\")",
+      "Bash(curl -s -X POST http://localhost:4000/api/auth/google -H \"Content-Type: application/json\" -d '{}')",
+      "Bash(curl -s -X POST http://localhost:4000/api/auth/google -H \"Content-Type: application/json\" -d '{\"idToken\":\"garbage\"}')",
+      "Bash(curl -s http://localhost:4000/api/auth/me)",
+      "Bash(tail -50 /tmp/server-dev.log)",
+      "Bash(curl -s -i http://localhost:4000/api/auth/me)"
+    ]
+  }
+}

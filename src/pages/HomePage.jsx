@@ -1,11 +1,10 @@
-import { useEffect, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
-import { CategoryFilter, FAQAccordion, InstructorCard, SearchBar } from "../components/Common";
-import { BootcampCard, CourseRail, FeaturedMasterclass } from "../components/CourseCards";
+import { useEffect, useRef, useState } from "react";
+import { Link } from "react-router-dom";
+import { FAQAccordion, InstructorCard } from "../components/Common";
+import { BootcampCard } from "../components/CourseCards";
 import { bootcamps } from "../data/bootcamps";
 import { instructors } from "../data/instructors";
 import { masterclasses } from "../data/masterclasses";
-import { useCategories } from "../hooks/useCategories";
 import { getHomepageContent, getTestimonials } from "../lib/api";
 
 const fallbackLearnerStories = [
@@ -68,6 +67,19 @@ const fallbackHomepageContent = {
   },
 };
 
+const courseTrackDefs = [
+  { key: "stock-markets", label: "Stock Markets", accent: "var(--color-teal)", match: (title) => /stock market/i.test(title) },
+  { key: "technical-analysis", label: "Technical Analysis & CMT", accent: "var(--color-navy)", match: (title) => /technical analysis|cmt level/i.test(title) },
+  { key: "nism", label: "NISM Certifications", accent: "var(--color-orange)", match: (title) => /^nism/i.test(title) },
+  { key: "options-derivatives", label: "Options & Derivatives", accent: "var(--color-teal)", match: (title) => /options/i.test(title) },
+  { key: "algo-trading", label: "Algo Trading", accent: "var(--color-navy)", match: (title) => /algo trading/i.test(title) },
+  { key: "cfa", label: "CFA Program", accent: "var(--color-orange)", match: (title) => /^cfa/i.test(title) },
+];
+
+function trackForCourse(course) {
+  return courseTrackDefs.find((track) => track.match(course.title))?.key || "other";
+}
+
 function normalizeMasterclass(course) {
   if (!course) return course;
   return {
@@ -77,14 +89,6 @@ function normalizeMasterclass(course) {
     overview: course.overview ?? course.summary,
     date: course.date ?? course.dateTime?.split(" · ")[0] ?? "",
     time: course.time ?? course.dateTime?.split(" · ")[1] ?? "",
-  };
-}
-
-function normalizeBootcamp(course) {
-  if (!course) return course;
-  return {
-    ...course,
-    price: course.price ?? course.priceLabel ?? "",
   };
 }
 
@@ -119,13 +123,14 @@ function renderTestimonialTitle(title) {
 }
 
 export default function HomePage() {
-  const navigate = useNavigate();
   const [homeContent, setHomeContent] = useState(fallbackHomepageContent);
-  const [loading, setLoading] = useState(true);
-  const [apiError, setApiError] = useState("");
-  const [query, setQuery] = useState("");
-  const [category, setCategory] = useState("all");
-  const { categories } = useCategories();
+  const [activeTrack, setActiveTrack] = useState("all");
+  const courseTracksRef = useRef(null);
+
+  const jumpToTrack = (trackKey) => {
+    setActiveTrack(trackKey);
+    courseTracksRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+  };
 
   useEffect(() => {
     let active = true;
@@ -147,10 +152,6 @@ export default function HomePage() {
       })
       .catch((error) => {
         console.warn("Using fallback homepage content:", error.message);
-        if (active) setApiError("Showing saved homepage content.");
-      })
-      .finally(() => {
-        if (active) setLoading(false);
       });
     return () => {
       active = false;
@@ -158,7 +159,6 @@ export default function HomePage() {
   }, []);
 
   const hero = homeContent.hero ?? fallbackHomepageContent.hero;
-  const categorySection = homeContent.categorySection ?? fallbackHomepageContent.categorySection;
   const testimonialSection = homeContent.testimonialSection ?? fallbackHomepageContent.testimonialSection;
   const finalCTA = homeContent.finalCTA ?? fallbackHomepageContent.finalCTA;
 
@@ -167,19 +167,21 @@ export default function HomePage() {
     ? homeContent.trendingMasterclasses
     : fallbackHomepageContent.trendingMasterclasses
   ).map(normalizeMasterclass);
-  const featuredBootcamps = (homeContent.featuredBootcamps?.length
-    ? homeContent.featuredBootcamps
-    : fallbackHomepageContent.featuredBootcamps
-  ).map(normalizeBootcamp);
   const learnerStories = (homeContent.testimonials?.length
     ? homeContent.testimonials
     : fallbackHomepageContent.testimonials
   ).map(normalizeTestimonial);
 
-  const discover = () =>
-    navigate(
-      `/masterclasses?search=${encodeURIComponent(query)}&category=${encodeURIComponent(category)}`,
-    );
+  const courseTracks = courseTrackDefs
+    .map((track) => ({ ...track, count: bootcamps.filter((course) => trackForCourse(course) === track.key).length }))
+    .filter((track) => track.count > 0);
+  const courseTabs = [
+    { key: "all", label: "All courses", accent: "var(--color-navy)", count: bootcamps.length },
+    ...courseTracks,
+  ];
+  const tabCourses = (
+    activeTrack === "all" ? bootcamps : bootcamps.filter((course) => trackForCourse(course) === activeTrack)
+  ).slice(0, 6);
 
   return (
     <main>
@@ -201,8 +203,23 @@ export default function HomePage() {
               <span key={point}>{point}</span>
             ))}
           </div>
-          {loading && <p className="loading-note">Loading latest homepage content...</p>}
-          {apiError && <p className="form-status">{apiError}</p>}
+          <div className="hero-topics">
+            <span className="hero-topics-label">Explore subjects</span>
+            <div className="hero-topics-list">
+              {courseTracks.map((track) => (
+                <button
+                  type="button"
+                  className="topic-pill"
+                  key={track.key}
+                  onClick={() => jumpToTrack(track.key)}
+                >
+                  <span className="topic-pill-dot" style={{ background: track.accent }} />
+                  {track.label}
+                  <span className="topic-pill-count">{track.count}</span>
+                </button>
+              ))}
+            </div>
+          </div>
         </div>
         <div className="course-wall">
           {[featuredMasterclass, ...trendingMasterclasses].slice(0, 5).map((course, index) => (
@@ -219,31 +236,31 @@ export default function HomePage() {
         </div>
       </section>
 
-      <section className="discovery section">
-        <div>
-          <div className="eyebrow">{categorySection.eyebrow}</div>
-          <h2>{categorySection.title}</h2>
-        </div>
-        <SearchBar value={query} onChange={setQuery} />
-        <CategoryFilter categories={categories} active={category} onChange={setCategory} />
-        <button className="button" onClick={discover}>
-          Discover classes
-        </button>
-      </section>
-
-      <FeaturedMasterclass course={featuredMasterclass} />
-      <CourseRail title="Trending live masterclasses" courses={trendingMasterclasses.slice(0, 5)} />
-
-      <section className="section">
+      <section className="section" id="course-tracks" ref={courseTracksRef}>
         <div className="section-heading">
           <div>
-            <div className="eyebrow">Cohort pathways</div>
-            <h2>Go deep with a bootcamp</h2>
+            <div className="eyebrow">Browse by track</div>
+            <h2>Pick a path, see the courses.</h2>
           </div>
-          <Link to="/bootcamps">Explore bootcamps →</Link>
+          <Link to="/bootcamps">View all bootcamps →</Link>
         </div>
-        <div className="grid three">
-          {featuredBootcamps.map((course) => (
+        <div className="course-tabs-nav" role="tablist">
+          {courseTabs.map((tab) => (
+            <button
+              type="button"
+              role="tab"
+              aria-selected={activeTrack === tab.key}
+              className={activeTrack === tab.key ? "course-tab active" : "course-tab"}
+              key={tab.key}
+              onClick={() => setActiveTrack(tab.key)}
+            >
+              {tab.label}
+              <span className="course-tab-count">{tab.count}</span>
+            </button>
+          ))}
+        </div>
+        <div className="grid three course-tabs-panel">
+          {tabCourses.map((course) => (
             <BootcampCard key={course.slug} course={course} />
           ))}
         </div>
@@ -257,11 +274,18 @@ export default function HomePage() {
             Every UpSkillr.in instructor pairs deep domain experience with a
             practical, generous teaching style.
           </p>
+          <div className="spotlight-stats">
+            {instructors[0].highlights?.slice(0, 3).map((item) => (
+              <span key={item}>{item}</span>
+            ))}
+          </div>
           <Link className="button secondary" to="/become-instructor">
             Teach at UpSkillr.in
           </Link>
         </div>
-        <InstructorCard instructorId={instructors[0].id} detailed />
+        <div className="spotlight-frame">
+          <InstructorCard instructorId={instructors[0].id} detailed />
+        </div>
       </section>
 
       <section className="section social-proof">

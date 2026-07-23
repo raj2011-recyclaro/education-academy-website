@@ -1,6 +1,9 @@
 import { useState } from "react";
 import { sendContactMessage, submitInstructorApplication } from "../lib/api";
 
+const MAX_RESUME_BYTES = 5 * 1024 * 1024;
+const RESUME_ACCEPT = ".pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document";
+
 export default function InfoPage({ type }) {
   const [sent, setSent] = useState(false);
   const [status, setStatus] = useState("");
@@ -8,8 +11,14 @@ export default function InfoPage({ type }) {
 
   const submit = async (event) => {
     event.preventDefault();
-    setStatus("Sending...");
     const formData = new FormData(event.currentTarget);
+    const resumeFile = formData.get("resume");
+    const hasResume = resumeFile instanceof File && resumeFile.size > 0;
+    if (hasResume && resumeFile.size > MAX_RESUME_BYTES) {
+      setStatus("Resume file is too large. Please upload a PDF or Word document under 5MB.");
+      return;
+    }
+    setStatus("Sending...");
     try {
       if (instructor) {
         await submitInstructorApplication({
@@ -18,7 +27,7 @@ export default function InfoPage({ type }) {
           phone: formData.get("phone"),
           topic: formData.get("topic"),
           message: formData.get("message"),
-        });
+        }, hasResume ? resumeFile : undefined);
       } else {
         await sendContactMessage({
           fullName: formData.get("fullName"),
@@ -81,6 +90,13 @@ export default function InfoPage({ type }) {
               {instructor ? "Tell us about your experience" : "How can we help?"}
               <textarea required name="message" rows="6" />
             </label>
+            {instructor && (
+              <label>
+                Resume / portfolio (optional)
+                <input type="file" name="resume" accept={RESUME_ACCEPT} />
+                <small className="field-hint">PDF or Word document, up to 5MB</small>
+              </label>
+            )}
             {status && <p className="form-status">{status}</p>}
             <button className="button" type="submit">Send message</button>
           </form>
